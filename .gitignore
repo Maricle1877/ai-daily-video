@@ -1,0 +1,18 @@
+# TTS 临时文件
+tts_*/
+aihot_voice_*/
+aihot_rec_*/
+pw_record_*/
+
+# 调整后的 HTML（配音脚本生成）
+*_adjusted.html
+*_adjusted.mp4
+
+# 视频文件
+*.mp4
+*.webm
+
+# Python
+__pycache__/
+*.pyc
+*.pyo

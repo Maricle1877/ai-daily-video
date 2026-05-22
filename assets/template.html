@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI HOT 日报 · {{DATE}}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    margin: 0;
+    padding: 0;
+    width: 1080px;
+    height: 1920px;
+    overflow: hidden;
+    font-family: 'Noto Sans SC', sans-serif;
+  }
+
+  .phone-frame {
+    width: 375px;
+    height: 667px;
+    position: relative;
+    overflow: hidden;
+    background: #0a0a1a;
+    transform: scale(2.88);
+    transform-origin: top left;
+  }
+
+  /* 动态背景粒子 */
+  .bg-particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+  }
+  .bg-particles .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.12;
+    animation: float 8s ease-in-out infinite;
+  }
+  .bg-particles .orb:nth-child(1) { width: 250px; height: 250px; background: #6c3cff; top: -80px; left: -80px; animation-delay: 0s; }
+  .bg-particles .orb:nth-child(2) { width: 200px; height: 200px; background: #00c9ff; bottom: 50px; right: -60px; animation-delay: 2s; }
+  .bg-particles .orb:nth-child(3) { width: 220px; height: 220px; background: #ff3c8e; bottom: -60px; left: 30px; animation-delay: 4s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-30px) scale(1.1); }
+  }
+
+  /* 场景容器 */
+  .scenes {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .scene {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    pointer-events: none;
+  }
+  .scene.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .scene.exit {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+
+  /* ========== 开场 ========== */
+  .scene-intro {
+    padding: 0 24px;
+    justify-content: center;
+  }
+  .scene-intro .logo {
+    font-size: 52px;
+    font-weight: 900;
+    background: linear-gradient(90deg, #6c3cff, #00c9ff, #ff3c8e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 6px;
+    margin-bottom: 16px;
+  }
+  .scene-intro .date {
+    font-size: 20px;
+    color: rgba(255,255,255,0.8);
+    font-weight: 500;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+  }
+  .scene-intro .intro-line {
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 10px;
+    letter-spacing: 4px;
+  }
+  .scene-intro .subtitle {
+    font-size: 16px;
+    color: rgba(255,255,255,0.5);
+    font-weight: 400;
+  }
+  .scene-intro .divider {
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #6c3cff, #00c9ff);
+    border-radius: 2px;
+    margin-bottom: 20px;
+  }
+
+  /* ========== 版块标题 ========== */
+  .scene-section {
+    justify-content: flex-start;
+    padding: 40px 24px 0;
+  }
+  .section-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .section-icon {
+    font-size: 36px;
+    flex-shrink: 0;
+  }
+  .section-title-wrap {
+    flex: 1;
+  }
+  .section-title {
+    font-size: 28px;
+    font-weight: 900;
+    background: linear-gradient(90deg, #6c3cff, #00c9ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+  }
+  .section-count {
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 400;
+    margin-top: 4px;
+  }
+  .section-line {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(108,60,255,0.4), rgba(0,201,255,0.1), transparent);
+  }
+  .section-preview {
+    margin-top: 16px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .preview-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    border-left: 3px solid rgba(108,60,255,0.3);
+  }
+  .preview-item .pi-num {
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(108,60,255,0.6);
+    min-width: 22px;
+  }
+  .preview-item .pi-text {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.5;
+  }
+
+  /* ========== 新闻条目 ========== */
+  .scene-item {
+    justify-content: flex-start;
+    padding: 32px 20px 20px;
+  }
+  .item-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .item-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+  }
+  .tag-models { background: rgba(108,60,255,0.2); color: #a78bfa; border: 1px solid rgba(108,60,255,0.3); }
+  .tag-products { background: rgba(0,201,255,0.2); color: #67e8f9; border: 1px solid rgba(0,201,255,0.3); }
+  .tag-industry { background: rgba(255,60,142,0.2); color: #f9a8d4; border: 1px solid rgba(255,60,142,0.3); }
+  .tag-paper { background: rgba(52,211,153,0.2); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.3); }
+  .tag-tip { background: rgba(251,191,36,0.2); color: #fcd34d; border: 1px solid rgba(251,191,36,0.3); }
+
+  .item-number {
+    font-size: 64px;
+    font-weight: 900;
+    background: linear-gradient(135deg, rgba(108,60,255,0.15), rgba(0,201,255,0.08));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+
+  .item-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.45;
+    margin-bottom: 12px;
+  }
+
+  .item-source {
+    font-size: 12px;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .item-source::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+  }
+
+  .item-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(108,60,255,0.3), transparent);
+    margin-bottom: 14px;
+  }
+
+  .item-summary {
+    font-size: 15px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.75;
+  }
+
+  .item-highlight {
+    margin-top: 16px;
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(108,60,255,0.08);
+    border: 1px solid rgba(108,60,255,0.15);
+    border-radius: 10px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.6;
+  }
+  .item-highlight strong {
+    color: #a78bfa;
+    font-weight: 600;
+  }
+
+  /* ========== 结尾 ========== */
+  .scene-outro {
+    padding: 0 24px;
+  }
+  .scene-outro .outro-text {
+    font-size: 30px;
+    font-weight: 900;
+    background: linear-gradient(90deg, #6c3cff, #00c9ff, #ff3c8e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+    letter-spacing: 3px;
+  }
+  .scene-outro .outro-sub {
+    font-size: 15px;
+    color: rgba(255,255,255,0.5);
+    font-weight: 400;
+  }
+  .scene-outro .outro-divider {
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(90deg, #6c3cff, #ff3c8e);
+    border-radius: 2px;
+    margin: 16px 0;
+  }
+  .scene-outro .outro-source {
+    font-size: 11px;
+    color: rgba(255,255,255,0.25);
+  }
+
+  /* 底部进度条 */
+  .progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #6c3cff, #00c9ff, #ff3c8e);
+    z-index: 10;
+    transition: width 0.3s linear;
+  }
+
+  /* 控制按钮 - 隐藏 */
+  .controls {
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <div class="bg-particles">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <div class="scenes" id="scenes">
+    <!-- 开场 -->
+    <div class="scene scene-intro active" data-duration="4000">
+      <div class="logo">AI HOT</div>
+      <div class="divider"></div>
+      <div class="intro-line">一日AI简报</div>
+      <div class="date">{{DATE_DOT}}</div>
+      <div class="subtitle">今日 AI 圈精选播报</div>
+    </div>
+
+    <!-- 版块循环：每个 section 生成一组场景 -->
+    {{SECTIONS}}
+
+    <!-- 结尾 -->
+    <div class="scene scene-outro" data-duration="3000">
+      <div class="outro-text">AI HOT 日报</div>
+      <div class="outro-divider"></div>
+      <div class="outro-sub">每日精选 · 持续更新</div>
+      <div class="outro-source">数据来源 aihot.virxact.com</div>
+    </div>
+  </div>
+
+  <div class="progress-bar" id="progressBar"></div>
+
+  <div class="controls">
+    <button onclick="prevScene()">⏮ 上一条</button>
+    <button id="playBtn" onclick="togglePlay()">⏸ 暂停</button>
+    <button onclick="nextScene()">下一条 ⏭</button>
+  </div>
+</div>
+
+<script>
+  const scenes = document.querySelectorAll('.scene');
+  const progressBar = document.getElementById('progressBar');
+  const playBtn = document.getElementById('playBtn');
+
+  let current = 0;
+  let isPlaying = true;
+  let timer = null;
+  let progressTimer = null;
+  let progressValue = 0;
+
+  function goTo(index) {
+    if (index < 0 || index >= scenes.length) return;
+
+    const prev = current;
+    scenes[prev].classList.remove('active');
+    scenes[prev].classList.add('exit');
+    setTimeout(() => {
+      scenes[prev].classList.remove('exit');
+    }, 600);
+
+    current = index;
+    scenes[current].classList.add('active');
+
+    progressValue = 0;
+    progressBar.style.width = '0%';
+
+    if (isPlaying) scheduleNext();
+  }
+
+  function nextScene() {
+    if (current < scenes.length - 1) {
+      goTo(current + 1);
+    } else {
+      goTo(0);
+    }
+  }
+
+  function prevScene() {
+    if (current > 0) {
+      goTo(current - 1);
+    }
+  }
+
+  function scheduleNext() {
+    clearTimeout(timer);
+    clearInterval(progressTimer);
+
+    const duration = parseInt(scenes[current].dataset.duration) || 3000;
+    const step = 50;
+    progressValue = 0;
+
+    progressTimer = setInterval(() => {
+      progressValue += (step / duration) * 100;
+      progressBar.style.width = Math.min(progressValue, 100) + '%';
+    }, step);
+
+    timer = setTimeout(() => {
+      clearInterval(progressTimer);
+      nextScene();
+    }, duration);
+  }
+
+  function togglePlay() {
+    isPlaying = !isPlaying;
+    playBtn.textContent = isPlaying ? '⏸ 暂停' : '▶ 播放';
+    if (isPlaying) {
+      scheduleNext();
+    } else {
+      clearTimeout(timer);
+      clearInterval(progressTimer);
+    }
+  }
+
+  scheduleNext();
+</script>
+
+</body>
+</html>
