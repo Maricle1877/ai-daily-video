@@ -50,6 +50,51 @@ def truncate_to_sentence(text, max_chars):
     return text[:max_chars] + "……"
 
 
+# ==================== 摘要过滤 ====================
+
+def filter_summary(text):
+    """过滤摘要中的诱导性/空洞文本"""
+    if not text:
+        return ""
+    import re as _re
+    text = _re.sub(r'[\U0001F300-\U0001F9FF👇⬇️👀👉]+\s*$', '', text).strip()
+    text = _re.sub(r'[👇⬇️👀👉]+\s*$', '', text).strip()
+    cut_patterns = [
+        r'以下是一些[^，。！？]*[。！？]?',
+        r'以下几个[^，。！？]*[。！？]?',
+        r'作品展示.*$',
+        r'成果展示[^，。！？]*[。！？]?',
+        r'让我们[^，。！？]*[。！？]?',
+        r'来看看[^，。！？]*[。！？]?',
+        r'快来[^，。！？]*[。！？]?',
+    ]
+    for pat in cut_patterns:
+        m = _re.search(pat, text)
+        if m:
+            before = text[:m.start()].strip()
+            if before:
+                text = before
+            else:
+                return ""
+    return text
+
+
+# ==================== 清晰度检查 ====================
+
+def ensure_clarity(summary, title):
+    """检查摘要是否有实质信息，确保听完能知道'发生了什么'"""
+    if not summary:
+        return truncate_to_sentence(title, 45)
+    action_keywords = ['发布', '推出', '开源', '宣布', '更新', '收购',
+                       '融资', '上线', '公开', '公布', '展示']
+    import re as _re
+    if any(_re.search(kw, summary) for kw in action_keywords):
+        return summary
+    if title:
+        return truncate_to_sentence(title, 45)
+    return summary
+
+
 # ==================== 解析 HTML ====================
 
 def parse_all_scenes(html_file):
@@ -86,6 +131,14 @@ def parse_all_scenes(html_file):
             if summary_match:
                 summary_text = re.sub(r"<[^>]+>", "", summary_match.group(1)).strip()
 
+            # 提取 item-title（用于清晰度兜底）
+            title_match = re.search(
+                r'<div class="item-title">(.*?)</div>', block, re.DOTALL
+            )
+            item_title = ""
+            if title_match:
+                item_title = re.sub(r"<[^>]+>", "", title_match.group(1)).strip()
+
             # 提取 item-highlight
             highlight_match = re.search(
                 r'<div class="item-highlight">(.*?)</div>', block, re.DOTALL
@@ -99,9 +152,16 @@ def parse_all_scenes(html_file):
 
             parts = []
             if summary_text:
-                parts.append(truncate_to_sentence(summary_text, 45))
+                filtered = filter_summary(summary_text)
+                if filtered:
+                    clear_text = ensure_clarity(filtered, item_title)
+                    parts.append(truncate_to_sentence(clear_text, 45))
             if highlight_text:
                 parts.append(truncate_to_sentence(highlight_text, 30))
+            if not parts and highlight_text:
+                parts.append(truncate_to_sentence(highlight_text, 45))
+            if not parts and item_title:
+                parts.append(truncate_to_sentence(item_title, 45))
             voice_text = "，".join(parts)
 
         all_scenes.append({
